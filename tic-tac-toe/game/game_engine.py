@@ -12,7 +12,12 @@ game/rules.py and check_round_end below) that Task 1 asks you to fix,
 and move validation has a known gap (see handle_click) that Task 3
 asks you to fix.
 """
+def handle_click(self, pos):
+    if self.round_over:
+        return
 
+    if self.current_player != HUMAN_SYMBOL:
+        return
 from game.rules import check_winner, is_board_full
 from game.renderer import board_pos_to_cell
 from game.ai import choose_move
@@ -57,14 +62,16 @@ class GameEngine:
             self.__init__()
 
     def check_round_end(self):
-        if is_board_full(self.board):        # BUG: checked before looking for a winner
-            self.round_over = True
-            self.winner = None
-            return
-        winner = check_winner(self.board)
-        if winner:
-            self.round_over = True
-            self.winner = winner
+    winner = check_winner(self.board)
+
+    if winner:
+        self.round_over = True
+        self.winner = winner
+        return
+
+    if is_board_full(self.board):
+        self.round_over = True
+        self.winner = None
 
     def draw(self, surface, font):
         from game import renderer
