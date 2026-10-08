@@ -26,24 +26,33 @@ class GameEngine:
         self.board = [[None] * 3 for _ in range(3)]
         self.current_player = 'X'
         self.round_over = False
-        self.winner = None   # 'X', 'O', or None (meaning draw, only valid when round_over)
+        self.winner = None
+        # 'X', 'O', or None (meaning draw when round_over is True)
 
     def handle_click(self, pos):
+        # Task 1: Ignore clicks after the round has ended.
         if self.round_over:
             return
 
         if self.current_player != HUMAN_SYMBOL:
-            return   # not your turn - the computer is about to move (or already has)
+            return
 
         cell = board_pos_to_cell(pos)
+
         if cell is None:
             return
 
         row, col = cell
-        self.board[row][col] = self.current_player   # Task 3 will fix occupied-cell validation
+
+        # Task 3 will later add occupied-cell validation.
+        self.board[row][col] = self.current_player
 
         self.check_round_end()
-        self.current_player = 'O' if self.current_player == 'X' else 'X'
+
+        self.current_player = (
+            'O' if self.current_player == 'X' else 'X'
+        )
+
         self._maybe_take_computer_turn()
 
     def _maybe_take_computer_turn(self):
@@ -51,13 +60,19 @@ class GameEngine:
             return
 
         move = choose_move(self.board)
+
         if move is None:
             return
 
         row, col = move
+
         self.board[row][col] = self.current_player
+
         self.check_round_end()
-        self.current_player = 'O' if self.current_player == 'X' else 'X'
+
+        self.current_player = (
+            'O' if self.current_player == 'X' else 'X'
+        )
 
     def handle_keydown(self, key):
         import pygame
@@ -66,6 +81,7 @@ class GameEngine:
             self.__init__()
 
     def check_round_end(self):
+        # Task 1: Check for a winner FIRST.
         winner = check_winner(self.board)
 
         if winner:
@@ -73,6 +89,8 @@ class GameEngine:
             self.winner = winner
             return
 
+        # Only declare a draw if there is no winner
+        # and the board is completely full.
         if is_board_full(self.board):
             self.round_over = True
             self.winner = None
@@ -88,10 +106,20 @@ class GameEngine:
             else "Computer's turn (O)"
         )
 
-        renderer.draw_text(surface, font, turn_label, (10, 20))
+        renderer.draw_text(
+            surface,
+            font,
+            turn_label,
+            (10, 20)
+        )
 
         if self.round_over:
-            text = f"{self.winner} wins!" if self.winner else "Draw!"
+            text = (
+                f"{self.winner} wins!"
+                if self.winner
+                else "Draw!"
+            )
+
             renderer.draw_banner(
                 surface,
                 font,
