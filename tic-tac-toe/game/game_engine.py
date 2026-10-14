@@ -14,7 +14,7 @@ asks you to fix.
 """
 
 from game.rules import check_winner, is_board_full
-from game.renderer import board_pos_to_cell
+from game.renderer import board_pos_to_cell, button_at
 from game.ai import choose_move
 
 HUMAN_SYMBOL = 'X'
@@ -24,14 +24,20 @@ COMPUTER_SYMBOL = 'O'
 class GameEngine:
     def __init__(self):
         self.scores = {'X': 0, 'O': 0, 'draws': 0}   # persists across rounds
+        self.first_player = 'X'   # who starts the next round; chosen by the player
         self.new_round()
 
     def new_round(self):
         """Start a fresh round; the scoreboard is kept."""
         self.board = [[None] * 3 for _ in range(3)]
-        self.current_player = 'X'
+        self.current_player = self.first_player
         self.round_over = False
         self.winner = None   # 'X', 'O', or None (meaning draw, only valid when round_over)
+        self._maybe_take_computer_turn()   # if O starts, the computer moves first
+
+    def toggle_first_player(self):
+        """Choose who starts; takes effect on the next round."""
+        self.first_player = 'O' if self.first_player == 'X' else 'X'
 
     def reset_match(self):
         """Clear the scoreboard and start a fresh round."""
@@ -39,6 +45,16 @@ class GameEngine:
         self.new_round()
 
     def handle_click(self, pos):
+        button = button_at(pos)
+        if button == 'first':
+            self.toggle_first_player()
+            return
+        if button == 'new_round':
+            self.new_round()
+            return
+        if button == 'reset_match':
+            self.reset_match()
+            return
         if self.round_over:
             return   # round has ended - ignore further moves
         if self.current_player != HUMAN_SYMBOL:
@@ -71,6 +87,8 @@ class GameEngine:
             self.new_round()
         elif key == pygame.K_m:
             self.reset_match()
+        elif key == pygame.K_f:
+            self.toggle_first_player()
 
     def check_round_end(self):
         winner = check_winner(self.board)
@@ -88,6 +106,7 @@ class GameEngine:
         renderer.draw_board(surface, self.board)
         turn_label = "Your turn (X)" if self.current_player == HUMAN_SYMBOL else "Computer's turn (O)"
         renderer.draw_text(surface, font, turn_label, (10, 15))
+        renderer.draw_buttons(surface, font, self.first_player)
         renderer.draw_text(
             surface, font,
             f"X: {self.scores['X']}  O: {self.scores['O']}  Draws: {self.scores['draws']}",
