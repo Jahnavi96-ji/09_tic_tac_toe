@@ -23,10 +23,20 @@ COMPUTER_SYMBOL = 'O'
 
 class GameEngine:
     def __init__(self):
+        self.scores = {'X': 0, 'O': 0, 'draws': 0}   # persists across rounds
+        self.new_round()
+
+    def new_round(self):
+        """Start a fresh round; the scoreboard is kept."""
         self.board = [[None] * 3 for _ in range(3)]
         self.current_player = 'X'
         self.round_over = False
         self.winner = None   # 'X', 'O', or None (meaning draw, only valid when round_over)
+
+    def reset_match(self):
+        """Clear the scoreboard and start a fresh round."""
+        self.scores = {'X': 0, 'O': 0, 'draws': 0}
+        self.new_round()
 
     def handle_click(self, pos):
         if self.round_over:
@@ -58,22 +68,30 @@ class GameEngine:
     def handle_keydown(self, key):
         import pygame
         if key == pygame.K_r:
-            self.__init__()
+            self.new_round()
+        elif key == pygame.K_m:
+            self.reset_match()
 
     def check_round_end(self):
         winner = check_winner(self.board)
         if winner:
             self.round_over = True
             self.winner = winner
+            self.scores[winner] += 1
         elif is_board_full(self.board):
             self.round_over = True
             self.winner = None
+            self.scores['draws'] += 1
 
     def draw(self, surface, font):
         from game import renderer
         renderer.draw_board(surface, self.board)
         turn_label = "Your turn (X)" if self.current_player == HUMAN_SYMBOL else "Computer's turn (O)"
-        renderer.draw_text(surface, font, turn_label, (10, 20))
+        renderer.draw_text(surface, font, turn_label, (10, 15))
+        renderer.draw_text(
+            surface, font,
+            f"X: {self.scores['X']}  O: {self.scores['O']}  Draws: {self.scores['draws']}",
+            (10, 55))
 
         if self.round_over:
             text = f"{self.winner} wins!" if self.winner else "Draw!"
